@@ -10,7 +10,7 @@ BOOT_LOGO="desktop"
 BOOT_FDT_FILE="rockchip/rk3568-nas-lite.dtb"
 IMAGE_PARTITION_TABLE="gpt"
 BOOT_SCENARIO="spl-blobs"
-ENABLE_EXTENSIONS="mesa-vpu"
+#ENABLE_EXTENSIONS="mesa-vpu"
 
 DDR_BLOB="rk35/rk3568_ddr_1056MHz_v1.13.bin"
 BL31_BLOB="rk35/rk3568_bl31_v1.33.elf"         # NOT a typo, bl31 is shared across 68 and 66
@@ -28,24 +28,70 @@ function post_family_config__nas-lite_use_mainline_uboot() {
 }
 
 function post_family_config__nas-lite_kernel() {
-	display_alert "$BOARD" "mainline BOOTPATCHDIR" "info"
-	# if [[ ${BRANCH} = "legacy" ]] || [[ ${BRANCH} = "vendor" ]]; then
-		# KERNELPATCHDIR="rockchip-5.10-nas-lite"
-	# fi
-	
+	display_alert "$BOARD" "mainline BOOTPATCHDIR" "info"	
 	if [[ ${BRANCH} = "legacy" ]] ; then
 		KERNELPATCHDIR="rockchip-5.10-nas-lite"
 	else
 		KERNELPATCHDIR="rockchip-6.1-nas-lite"
 	fi	
-	
-	
 }
+
+function custom_kernel_config__nas-lite_pcie() {
+	if [[ ${BRANCH} = "legacy" ]]; then
+		display_alert "dg-tn3568" "vendor Enabling ROCKCHIP_CPUINFO HASH" "info"
+		kernel_config_modifying_hashes+=(
+			"# CONFIG_PCIEASPM_DEFAULT is not set"
+			"CONFIG_PCIEASPM_POWER_SUPERSAVE=y"
+		)
+		if [[ -f .config ]] && [[ "${KERNEL_CONFIGURE:-yes}" != "yes" ]]; then
+			display_alert "dg-tn3568" "vendor Enabling ROCKCHIP_CPUINFO CONFIG" "info"
+			kernel_config_set_n CONFIG_PCIEASPM_DEFAULT
+			kernel_config_set_y CONFIG_PCIEASPM_POWER_SUPERSAVE
+			run_kernel_make olddefconfig
+		fi
+	fi
+
+	if [[ ${BRANCH} = "vendor" ]]; then
+		display_alert "dg-tn3568" "vendor Enabling ROCKCHIP_CPUINFO HASH" "info"
+		kernel_config_modifying_hashes+=(
+			"# CONFIG_PCIEASPM_DEFAULT is not set"
+			"CONFIG_PCIEASPM_POWER_SUPERSAVE=y"
+			"CONFIG_NVMEM_RMEM=y"
+			"CONFIG_NVMEM_ROCKCHIP_EFUSE=y"
+			"CONFIG_NVMEM_ROCKCHIP_OTP=y"
+			"CONFIG_ROCKCHIP_CPUINFO=y"
+		)
+		if [[ -f .config ]] && [[ "${KERNEL_CONFIGURE:-yes}" != "yes" ]]; then
+			display_alert "dg-tn3568" "vendor Enabling ROCKCHIP_CPUINFO CONFIG" "info"
+			kernel_config_set_y CONFIG_NVMEM_RMEM
+			kernel_config_set_y CONFIG_NVMEM_ROCKCHIP_EFUSE
+			kernel_config_set_y CONFIG_NVMEM_ROCKCHIP_OTP
+			kernel_config_set_y CONFIG_ROCKCHIP_CPUINFO
+			kernel_config_set_n CONFIG_PCIEASPM_DEFAULT
+			kernel_config_set_y CONFIG_PCIEASPM_POWER_SUPERSAVE
+			run_kernel_make olddefconfig
+		fi
+	fi
+}
+
 
 function post_family_tweaks__nas-lite() {
     display_alert "$BOARD" "Installing board tweaks" "info"
 	cp -R $SRC/packages/blobs/rtl8723bt_fw/* $SDCARD/lib/firmware/rtl_bt/
 	cp -R $SRC/packages/blobs/station/firmware/* $SDCARD/lib/firmware/
+	if [[ ${BRANCH} = "legacy" ]] ; then
+		display_alert "$BOARD" "Enabling nas-lite upgrade lock dtb adn kernel" "info"
+		chroot_sdcard apt-mark hold linux-dtb-legacy-rk35xx
+		chroot_sdcard apt-mark hold linux-image-legacy-rk35xx
+		chroot_sdcard apt-mark hold linux-u-boot-nas-lite-legacy
+		chroot_sdcard ssh-keygen -A
+	else
+		display_alert "$BOARD" "Enabling nas-lite upgrade lock dtb adn kernel" "info"
+		chroot_sdcard apt-mark hold linux-dtb-vendor-rk35xx
+		chroot_sdcard apt-mark hold linux-image-vendor-rk35xx
+		chroot_sdcard apt-mark hold linux-u-boot-nas-lite-vendor
+	fi
+
 	return 0
 }
 

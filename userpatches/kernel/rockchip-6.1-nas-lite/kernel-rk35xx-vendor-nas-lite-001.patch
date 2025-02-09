@@ -1,37 +1,36 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: John Doe <john.doe@somewhere.on.planet>
-Date: Fri, 21 Jun 2024 19:51:17 +0800
+Date: Wed, 22 Jan 2025 23:46:04 +0800
 Subject: Patching kernel rk35xx files arch/arm64/boot/dts/rockchip/Makefile
  arch/arm64/boot/dts/rockchip/rk3568-nas-lite.dts
  drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c
 
 Signed-off-by: John Doe <john.doe@somewhere.on.planet>
 ---
- arch/arm64/boot/dts/rockchip/Makefile            |    2 +
- arch/arm64/boot/dts/rockchip/rk3568-nas-lite.dts | 1784 ++++++++++
+ arch/arm64/boot/dts/rockchip/Makefile            |    2 +-
+ arch/arm64/boot/dts/rockchip/rk3568-nas-lite.dts | 1517 ++++++++++
  drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c   |   51 +-
- 3 files changed, 1825 insertions(+), 12 deletions(-)
+ 3 files changed, 1557 insertions(+), 13 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/Makefile b/arch/arm64/boot/dts/rockchip/Makefile
-index 5ca976469398..26ddad25fc0c 100644
+index 1a081603f552..e4a5d02609ef 100644
 --- a/arch/arm64/boot/dts/rockchip/Makefile
 +++ b/arch/arm64/boot/dts/rockchip/Makefile
-@@ -333,7 +333,9 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-rock-5a.dtb
- dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-rock-5c.dtb
- dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-roc-pc.dtb
- dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-tablet-rk806-single-v10.dtb
- dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-tablet-v10.dtb
- dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588s-tablet-v11.dtb
+@@ -1,7 +1,7 @@
+ # SPDX-License-Identifier: GPL-2.0
+-dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-evb.dtb
 +dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3568-nas-lite.dtb
-+
- 
- subdir-y := $(dts-dirs) overlay
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-engicam-px30-core-ctouch2.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-engicam-px30-core-ctouch2-of10.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-engicam-px30-core-edimm2.2.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-evb-ddr3-v10.dtb
+ dtb-$(CONFIG_ARCH_ROCKCHIP) += px30-evb-ddr3-v10-avb.dtb
 diff --git a/arch/arm64/boot/dts/rockchip/rk3568-nas-lite.dts b/arch/arm64/boot/dts/rockchip/rk3568-nas-lite.dts
 new file mode 100644
-index 000000000000..369ba0c0e725
+index 000000000000..87bbaf625d8d
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3568-nas-lite.dts
-@@ -0,0 +1,1784 @@
+@@ -0,0 +1,1517 @@
 +// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 +/*
 + * Copyright (c) 2020 Rockchip Electronics Co., Ltd.
@@ -93,22 +92,6 @@ index 000000000000..369ba0c0e725
 +		};
 +	};
 +
-+	audiopwmout_diff: audiopwmout-diff {
-+		status = "disabled";
-+		compatible = "simple-audio-card";
-+		simple-audio-card,format = "i2s";
-+		simple-audio-card,name = "rockchip,audiopwmout-diff";
-+		simple-audio-card,mclk-fs = <256>;
-+		simple-audio-card,bitclock-master = <&master>;
-+		simple-audio-card,frame-master = <&master>;
-+		simple-audio-card,cpu {
-+			sound-dai = <&i2s3_2ch>;
-+		};
-+		master: simple-audio-card,codec {
-+			sound-dai = <&dig_acodec>;
-+		};
-+	};
-+
 +	dc_12v: dc-12v {
 +		compatible = "regulator-fixed";
 +		regulator-name = "dc_12v";
@@ -163,47 +146,6 @@ index 000000000000..369ba0c0e725
 +		simple-audio-card,codec {
 +			sound-dai = <&pdmics>;
 +		};
-+	};
-+
-+	rk809_sound: rk809-sound {
-+		status = "okay";
-+		compatible = "simple-audio-card";
-+		simple-audio-card,format = "i2s";
-+		simple-audio-card,name = "rockchip,rk809-codec";
-+		simple-audio-card,mclk-fs = <256>;
-+
-+		simple-audio-card,cpu {
-+			sound-dai = <&i2s1_8ch>;
-+		};
-+		simple-audio-card,codec {
-+			sound-dai = <&rk809_codec>;
-+		};
-+	};
-+
-+	spdif-sound {
-+		status = "disabled";
-+		compatible = "simple-audio-card";
-+		simple-audio-card,name = "ROCKCHIP,SPDIF";
-+		simple-audio-card,cpu {
-+				sound-dai = <&spdif_8ch>;
-+		};
-+		simple-audio-card,codec {
-+				sound-dai = <&spdif_out>;
-+		};
-+	};
-+
-+	spdif_out: spdif-out {
-+			status = "disabled";
-+			compatible = "linux,spdif-dit";
-+			#sound-dai-cells = <0>;
-+	};
-+
-+	vad_sound: vad-sound {
-+		status = "disabled";
-+		compatible = "rockchip,multicodecs-card";
-+		rockchip,card-name = "rockchip,rk3568-vad";
-+		rockchip,cpu = <&i2s1_8ch>;
-+		rockchip,codec = <&rk809_codec>, <&vad>;
 +	};
 +
 +	vcc3v3_sys: vcc3v3-sys {
@@ -356,9 +298,9 @@ index 000000000000..369ba0c0e725
 +		pulses-per-revolution = <2>;
 +        cooling-levels = <0 50 100 150 200 255>;
 +        rockchip,temp-trips = <
-+                40000   1
-+                50000   2
-+                55000   3
++                30000   1
++                40000   2
++                50000   3
 +                60000   4
 +                70000   5
 +        >;			
@@ -372,43 +314,7 @@ index 000000000000..369ba0c0e725
 +	status = "okay";
 +};
 +
-+&can0 {
-+	assigned-clocks = <&cru CLK_CAN0>;
-+	assigned-clock-rates = <150000000>;
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&can0m1_pins>;
-+	status = "disabled";
-+};
-+
-+&can1 {
-+	assigned-clocks = <&cru CLK_CAN1>;
-+	assigned-clock-rates = <150000000>;
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&can1m1_pins>;
-+	status = "disabled";
-+};
-+
-+&can2 {
-+	assigned-clocks = <&cru CLK_CAN2>;
-+	assigned-clock-rates = <150000000>;
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&can2m1_pins>;
-+	status = "disabled";
-+};
-+
 +&cpu0 {
-+	cpu-supply = <&vdd_cpu>;
-+};
-+
-+&cpu1 {
-+	cpu-supply = <&vdd_cpu>;
-+};
-+
-+&cpu2 {
-+	cpu-supply = <&vdd_cpu>;
-+};
-+
-+&cpu3 {
 +	cpu-supply = <&vdd_cpu>;
 +};
 +
@@ -430,16 +336,14 @@ index 000000000000..369ba0c0e725
 +};
 +
 +&gpu {
-+	clock-names = "gpu", "bus";
-+	interrupt-names = "gpu", "mmu", "job";
++	//clock-names = "gpu", "bus";
++	//interrupt-names = "gpu", "mmu", "job";
 +	mali-supply = <&vdd_gpu>;
 +	status = "okay";
 +};
 +
 +&hdmi {
 +	status = "okay";
-+	avdd-0v9-supply = <&vdda0v9_image>;
-+	avdd-1v8-supply = <&vcca1v8_image>;	
 +	rockchip,phy-table =
 +		<92812500  0x8009 0x0000 0x0270>,
 +		<165000000 0x800b 0x0000 0x026d>,
@@ -466,14 +370,6 @@ index 000000000000..369ba0c0e725
 +	//4.19内核需要配置为default
 +	pinctrl-names = "active";
 +	status = "okay";
-+};
-+
-+&pwm4 {
-+	status = "disabled";
-+};
-+
-+&pwm5 {
-+	status = "disabled";
 +};
 +
 +&pwm15 {
@@ -925,28 +821,6 @@ index 000000000000..369ba0c0e725
 +			<0xb8 KEY_0>;
 +	};	
 +};
-+	
-+
-+
-+&csi2_dphy_hw {
-+	status = "disabled";
-+};
-+
-+&csi2_dphy0 {
-+	status = "disabled";
-+};
-+
-+&rkisp {
-+	status = "disabled";
-+};
-+
-+&rkisp_mmu {
-+	status = "disabled";
-+};
-+
-+&rkisp_vir0 {
-+	status = "disabled";
-+};
 +
 +&i2c0 {
 +	status = "okay";
@@ -1221,39 +1095,12 @@ index 000000000000..369ba0c0e725
 +				};
 +			};
 +		};
-+
-+		rk809_codec: codec {
-+			#sound-dai-cells = <0>;
-+			compatible = "rockchip,rk809-codec", "rockchip,rk817-codec";
-+			clocks = <&cru I2S1_MCLKOUT>;
-+			clock-names = "mclk";
-+			assigned-clocks = <&cru I2S1_MCLKOUT>, <&cru I2S1_MCLK_TX_IOE>;
-+			assigned-clock-rates = <12288000>;
-+			assigned-clock-parents = <&cru I2S1_MCLKOUT_TX>, <&cru I2S1_MCLKOUT_TX>;
-+			pinctrl-names = "default";
-+			pinctrl-0 = <&i2s1m0_mclk>;
-+			hp-volume = <20>;
-+			spk-volume = <3>;
-+			mic-in-differential;
-+			status = "okay";
-+		};
 +	};
 +};
 +
 +&i2s0_8ch {
 +	status = "okay";
 +};
-+
-+&i2s1_8ch {
-+	status = "okay";
-+	rockchip,clk-trcm = <1>;
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&i2s1m0_sclktx
-+		     &i2s1m0_lrcktx
-+		     &i2s1m0_sdi0
-+		     &i2s1m0_sdo0>;
-+};
-+
 +
 +&i2c2 {
 +	status = "disabled";
@@ -1326,51 +1173,10 @@ index 000000000000..369ba0c0e725
 +	status = "okay";
 +};
 +
-+&uart0 {
-+	status = "disabled";
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&uart0_xfer>;
-+};
-+
-+&uart3 {
-+	status = "okay";
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&uart3m1_xfer>;
-+};
-+
-+&uart4 {
-+	status = "disabled";
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&uart4m0_xfer>;
-+};
-+
-+&uart5 {
-+	status = "okay";
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&uart5m1_xfer>;
-+};
-+
-+&uart7 {
-+	status = "disabled";
-+};
-+
-+&uart8 {
-+	status = "disabled";
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&uart8m0_xfer>;
-+};
-+
 +&mdio0 {
 +	rgmii_phy0: phy@0 {
 +		compatible = "ethernet-phy-ieee802.3-c22";
 +		reg = <0x0>;
-+	};
-+};
-+
-+&mdio1 {
-+	rgmii_phy1: phy@1 {
-+		compatible = "ethernet-phy-ieee802.3-c22";
-+		reg = <0x1>;
 +	};
 +};
 +
@@ -1402,52 +1208,6 @@ index 000000000000..369ba0c0e725
 +	phy-supply = <&vcc_phy>;
 +	status = "okay";	
 +};
-+
-+&gmac1 {
-+	phy-mode = "rgmii";
-+	//clock_in_out = "output";
-+	clock_in_out = "input";
-+
-+	snps,reset-gpio = <&gpio3 RK_PA6 GPIO_ACTIVE_LOW>;
-+	snps,reset-active-low;
-+	
-+	snps,reset-delays-us = <0 20000 100000>;
-+
-+	assigned-clocks = <&cru SCLK_GMAC1_RX_TX>, <&cru SCLK_GMAC1>;
-+	assigned-clock-parents = <&cru SCLK_GMAC1_RGMII_SPEED>, <&cru CLK_MAC1_2TOP>;
-+	assigned-clock-rates = <0>, <125000000>;
-+	
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&gmac1m1_miim
-+		     &gmac1m1_tx_bus2
-+		     &gmac1m1_rx_bus2
-+		     &gmac1m1_rgmii_clk
-+		     &gmac1m1_rgmii_bus>;
-+
-+	tx_delay = <0x3d>;
-+	rx_delay = <0x23>;
-+
-+	phy-handle = <&rgmii_phy1>;
-+	phy-supply = <&vcc_phy>;
-+	status = "disabled";
-+};
-+
-+&can1 {
-+	assigned-clocks = <&cru CLK_CAN1>;
-+	assigned-clock-rates = <150000000>;
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&can1m1_pins>;
-+	status = "disabled";
-+};
-+
-+&can2 {
-+	assigned-clocks = <&cru CLK_CAN2>;
-+	assigned-clock-rates = <150000000>;
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&can2m1_pins>;
-+	status = "disabled";
-+};
-+
 +	
 +&pcie2x1 {
 +	num-lanes = <1>;
@@ -1489,15 +1249,6 @@ index 000000000000..369ba0c0e725
 +            led-gpios = <&gpio3 RK_PC4 GPIO_ACTIVE_LOW>;           
 +            debug = <0>; //等级0～7 越高信息越多
 +       };
-+};
-+
-+&rk809_codec {
-+	status = "disabled";
-+	spk-mute-delay-ms = <30>;
-+};
-+
-+&rk809_sound {
-+	status = "disabled";
 +};
 +
 +&spi1 {
@@ -1596,7 +1347,6 @@ index 000000000000..369ba0c0e725
 +    status = "okay"; 
 +};
 +
-+
 +&pinctrl {
 +	pmic {
 +		pmic_int: pmic_int {
@@ -1682,12 +1432,7 @@ index 000000000000..369ba0c0e725
 +	vccio5-supply = <&vcc_3v3>;
 +	vccio6-supply = <&vcc_1v8>;
 +	vccio7-supply = <&vcc_3v3>;
-+	status = "okay";
-+
-+//	/delete-property/ pmuio1-supply;
-+//	/delete-property/ vccio2-supply;	
-+	
-+	
++	status = "okay";	
 +};
 +
 +&rk_rga {
@@ -1773,13 +1518,6 @@ index 000000000000..369ba0c0e725
 +	status = "okay";
 +};
 +
-+&vad {
-+	rockchip,audio-src = <&i2s1_8ch>;
-+	rockchip,buffer-time-ms = <128>;
-+	rockchip,det-channel = <0>;
-+	rockchip,mode = <0>;
-+};
-+
 +&vdpu {
 +	status = "okay";
 +};
@@ -1810,15 +1548,8 @@ index 000000000000..369ba0c0e725
 +	rockchip,plane-mask = <(1 << ROCKCHIP_VOP2_CLUSTER0 | 1 << ROCKCHIP_VOP2_ESMART0)>;
 +	rockchip,primary-plane = <ROCKCHIP_VOP2_ESMART0>;
 +};
-+
-+/*
-+&uart2 {
-+	status = "okay";
-+};
-+*/
-\ No newline at end of file
 diff --git a/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c b/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c
-index 28bdf6f2b54b..8ad253b3b895 100644
+index c73d147230d3..a9fbbf400fd0 100644
 --- a/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c
 +++ b/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.c
 @@ -24,14 +24,16 @@
@@ -1838,7 +1569,7 @@ index 28bdf6f2b54b..8ad253b3b895 100644
  struct rk_gmac_ops {
  	void (*set_to_rgmii)(struct rk_priv_data *bsp_priv,
  			     int tx_delay, int rx_delay);
-@@ -2809,10 +2811,36 @@ int dwmac_rk_get_phy_interface(struct stmmac_priv *priv)
+@@ -2962,10 +2964,36 @@ int dwmac_rk_get_phy_interface(struct stmmac_priv *priv)
  
  	return bsp_priv->phy_iface;
  }
@@ -1875,7 +1606,7 @@ index 28bdf6f2b54b..8ad253b3b895 100644
  	struct rk_priv_data *bsp_priv = priv;
  	struct device *dev = &bsp_priv->pdev->dev;
  	unsigned char ethaddr[ETH_ALEN * MAX_ETH] = {0};
-@@ -2827,25 +2855,24 @@ static void rk_get_eth_addr(void *priv, unsigned char *addr)
+@@ -2980,25 +3008,24 @@ static void rk_get_eth_addr(void *priv, unsigned char *addr)
  	}
  
  	ret = rk_vendor_read(LAN_MAC_ID, ethaddr, ETH_ALEN * MAX_ETH);
